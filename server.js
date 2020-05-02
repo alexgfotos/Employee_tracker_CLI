@@ -52,8 +52,12 @@ async function mainPrompt() {
   console.log(answers)
 
   if (answers.main === "Employees") {
-    // showEmployees();
     employeePrompt();
+
+  }
+
+  if (answers.main === "Roles") {
+    rolePrompt();
 
   }
 
@@ -104,6 +108,38 @@ async function employeePrompt() {
   if (answers.employeePrompt === "Add") {
     addEmployee();
   };
+
+  if (answers.employeePrompt === "Delete") {
+    deleteEmployee();
+  };
+
+}
+
+async function rolePrompt() {
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      message: "What would like to do with roles?",
+      name: "rolePrompt",
+      choices: ["View All", "Add", "Edit", "Delete", "ABORT"]
+    }
+
+  ])
+
+  if (answers.rolePrompt === "ABORT") {
+    console.log("ABORTING!");
+    continuePrompt()
+  }
+
+  if (answers.rolePrompt === "View All") {
+    console.log("Generating Employee Table...");
+    viewRoles();
+  };
+
+  if (answers.employeePrompt === "Add") {
+    addrole();
+  };
+
 }
 
 async function addEmployee() {
@@ -113,52 +149,103 @@ async function addEmployee() {
       type: "input",
       message: "What is the employee's first name?",
       name: "first_name",
-      
     },
     {
       type: "input",
-      message: "What is the employee's name?",
+      message: "What is the employee's last name?",
       name: "last_name",
-      
     },
     {
       type: "list",
       message: "What is the employee's role?",
-      name: "role",
+      name: "role_id",
       choices: ["Presidente", "Boss Man", "Tinkerer", "Grunt", "Punching Bag"]
     }
 
   ])
-  if (answers.role === "Presidente"){
-    answers.role = 1
+  if (answers.role_id === "Presidente") {
+    answers.role_id = 1
   }
-  if (answers.role === "Boss Man"){
-    answers.role = 2
+  if (answers.role_id === "Boss Man") {
+    answers.role_id = 2
   }
-  if (answers.role === "Tinkerer"){
-    answers.role = 3
+  if (answers.role_id === "Tinkerer") {
+    answers.role_id = 3
   }
-  if (answers.role === "Grunt"){
-    answers.role = 4
+  if (answers.role_id === "Grunt") {
+    answers.role_id = 4
   }
-  if (answers.role === "Punching Bag"){
-    answers.role = 5
+  if (answers.role_id === "Punching Bag") {
+    answers.role_id = 5
   }
+  console.log(answers);
   writeEmployee(answers)
+
+
 }
 
-async function writeEmployee(answers) {
-  connection.query("INSERT INTO employees (employee) VALUES (?)", [answers.first_name, answers.last_name, answers.role, "NULL"], function(err, data) {
-    if (err) {
-      console.log("somethings up...");
-    }
 
+async function writeEmployee(answers) {
+  connection.query("INSERT INTO employee SET ?", answers, function (err, data) {
+    if (err) {
+      console.log("somethings up...")
+      console.log(err);
+    }
+    console.table(data);
     console.log(answers.first_name + " added!");
   });
 }
 
+async function deleteEmployee() {
+  console.log("Delete...")
+  connection.query("SELECT * FROM employee", function (err1, res1) {
+    const answers = await inquirer.prompt([
+      {
+        type: "list",
+        message: "Who are you ELIMINATING?",
+        name: "all_employees",
+        choices: res1.map(employee => {
+          return {
+            name: employee.first_name,
+            value: employee.id
+          }
+        })
+      }
+    ])
+    await connection.query("DELETE FROM employee WHERE id = ?", answers.all_employees, function (err2, data2) {
+      if (err2) {
+        console.log("somethings up...")
+        console.log(err2);
+      }
+      console.table(data2);
+      console.log(answers.first_name + " added!");
+    });
+
+  })
+}
+
 async function viewEmployees() {
   connection.query("SELECT * FROM employee;", function (err, data) {
+    if (err) {
+      console.log("HELP EMPLOYOTRON");
+    }
+
+    console.table(data);
+  })
+}
+
+async function viewRoles() {
+  connection.query("SELECT * FROM role;", function (err, data) {
+    if (err) {
+      console.log("HELP EMPLOYOTRON");
+    }
+
+    console.table(data);
+  })
+}
+
+async function viewDepartments() {
+  connection.query("SELECT * FROM department;", function (err, data) {
     if (err) {
       console.log("HELP EMPLOYOTRON");
     }
