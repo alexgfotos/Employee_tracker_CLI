@@ -22,27 +22,18 @@ const connection = mysql.createConnection({
 
   // Your password
   password: "burger12?",
-  database: "employeeDB"
+  database: "employees"
 });
 
-// ================================================================================
-// ROUTER
-// The below points our server to a series of "route" files.
-// These routes give our server a "map" of how to respond when users visit or request data from various URLs.
-// ================================================================================
 
 require("./routes/apiRoutes")(app, connection);
 require("./routes/htmlRoutes")(app);
-
-// =============================================================================
-// LISTENER
-// The below code effectively "starts" our server
-// =============================================================================
 
 
 // function getEmployees() = connection.query("SELECT first_name, last_name, role.title FROM employee INNER JOIN role ON role_id = role.id", function (err, res) {
 //   console.table(res)
 // })
+
 
 async function mainPrompt() {
   const answers = await inquirer.prompt([
@@ -59,10 +50,10 @@ async function mainPrompt() {
     console.log("ABORTED SUCCESSFULLY")
   }
   console.log(answers)
- 
-  if (answers.main === "View Employees") {
+
+  if (answers.main === "Employees") {
     // showEmployees();
-    continuePrompt();
+    employeePrompt();
 
   }
 
@@ -89,6 +80,92 @@ async function continuePrompt() {
   }
 }
 
+async function employeePrompt() {
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      message: "What would like to do with Employees?",
+      name: "employeePrompt",
+      choices: ["View All", "Add", "Edit", "Delete", "ABORT"]
+    }
+
+  ])
+
+  if (answers.employeePrompt === "ABORT") {
+    console.log("ABORTING!");
+    continuePrompt()
+  }
+
+  if (answers.employeePrompt === "View All") {
+    console.log("Generating Employee Table...");
+    viewEmployees();
+  };
+
+  if (answers.employeePrompt === "Add") {
+    addEmployee();
+  };
+}
+
+async function addEmployee() {
+  console.log("ADD AN EMPLOYEE")
+  const answers = await inquirer.prompt([
+    {
+      type: "input",
+      message: "What is the employee's first name?",
+      name: "first_name",
+      
+    },
+    {
+      type: "input",
+      message: "What is the employee's name?",
+      name: "last_name",
+      
+    },
+    {
+      type: "list",
+      message: "What is the employee's role?",
+      name: "role",
+      choices: ["Presidente", "Boss Man", "Tinkerer", "Grunt", "Punching Bag"]
+    }
+
+  ])
+  if (answers.role === "Presidente"){
+    answers.role = 1
+  }
+  if (answers.role === "Boss Man"){
+    answers.role = 2
+  }
+  if (answers.role === "Tinkerer"){
+    answers.role = 3
+  }
+  if (answers.role === "Grunt"){
+    answers.role = 4
+  }
+  if (answers.role === "Punching Bag"){
+    answers.role = 5
+  }
+  writeEmployee(answers)
+}
+
+async function writeEmployee(answers) {
+  connection.query("INSERT INTO employees (employee) VALUES (?)", [answers.first_name, answers.last_name, answers.role, "NULL"], function(err, data) {
+    if (err) {
+      console.log("somethings up...");
+    }
+
+    console.log(answers.first_name + " added!");
+  });
+}
+
+async function viewEmployees() {
+  connection.query("SELECT * FROM employee;", function (err, data) {
+    if (err) {
+      console.log("HELP EMPLOYOTRON");
+    }
+
+    console.table(data);
+  })
+}
 
 mainPrompt()
 

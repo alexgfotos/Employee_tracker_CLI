@@ -29,10 +29,10 @@ CREATE TABLE employee (
 );
 
 INSERT INTO department (name)
-VALUES ("Bosser");
+VALUES ("Bossers"), ("Engineers"), ("Workers");
 
 INSERT INTO role (title, salary, department_id)
-VALUES ("Boss Man", 1000, 1);
+VALUES ("Presidente", 100000, 1), ("Boss Man", 50000, 1), ("Tinkerer", 65000, 2), ("Grunt", 35000, 3), ("Punching Bag", 5, 3);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES ("Alex", "Gee", 1, NULL);
