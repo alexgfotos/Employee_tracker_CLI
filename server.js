@@ -451,7 +451,6 @@ async function assignManager() {
         console.log("somethings up...")
         console.log(err2);
       }
-      console.table(data2);
       console.log("updated!");
     });
     mainPrompt()
@@ -492,10 +491,9 @@ async function editEmployeeRole() {
           console.log("somethings up...")
           console.log(err3);
         }
-        console.table(data3);
         console.log("updated!");
       });
-    })
+    }) 
     mainPrompt()
   })
 }
