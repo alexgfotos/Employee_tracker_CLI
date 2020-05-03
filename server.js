@@ -1,14 +1,8 @@
-const express = require("express");
 const mysql = require("mysql");
 const inquirer = require("inquirer")
 
-const app = express();
 
-const PORT = process.env.PORT || 8000;
-
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
+// "UPDATE quotes SET ? WHERE ?", [{author: kjldhfg, quote: elkfhjer}, {id: something.id}]
 
 // Create a connection to the DB
 const connection = mysql.createConnection({
@@ -25,15 +19,22 @@ const connection = mysql.createConnection({
   database: "employees"
 });
 
+function validateNum(num) {
+  var isValid = !isNaN(parseFloat(num));
+  return isValid || "Entry should be a number!";
+}
 
-require("./routes/apiRoutes")(app, connection);
-require("./routes/htmlRoutes")(app);
+function employeeList(cb) {
+  return connection.query("SELECT * FROM employee", cb)
+}
 
+function roleList(cb) {
+  return connection.query("SELECT * FROM role", cb)
+}
 
-// function getEmployees() = connection.query("SELECT first_name, last_name, role.title FROM employee INNER JOIN role ON role_id = role.id", function (err, res) {
-//   console.table(res)
-// })
-
+function departmentList(cb) {
+  return connection.query("SELECT * FROM department", cb)
+}
 
 async function mainPrompt() {
   const answers = await inquirer.prompt([
@@ -41,10 +42,12 @@ async function mainPrompt() {
       type: "list",
       message: "WELCOME TO EMPLOYOTRON 8000, WHAT DO YOU WISH TO EXECUTE?",
       name: "main",
-      choices: ["Employees", "Roles", "Managers", "ABORT"]
+      choices: ["Employees", "Roles", "Departments", "ABORT"]
     }
 
   ])
+
+  // var runPrompt = answers.choices[]
 
   if (answers.main === "ABORT") {
     console.log("ABORTED SUCCESSFULLY")
@@ -61,8 +64,12 @@ async function mainPrompt() {
 
   }
 
-}
+  if (answers.main === "Departments") {
+    departmentPrompt();
 
+  }
+
+}
 
 
 async function continuePrompt() {
@@ -136,53 +143,116 @@ async function rolePrompt() {
     viewRoles();
   };
 
-  if (answers.employeePrompt === "Add") {
-    addrole();
+  if (answers.rolePrompt === "Add") {
+    addRole();
+  };
+
+}
+
+async function departmentPrompt() {
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      message: "What would like to do with departments?",
+      name: "rolePrompt",
+      choices: ["View All", "Add", "Edit", "Delete", "ABORT"]
+    }
+
+  ])
+
+  if (answers.rolePrompt === "ABORT") {
+    console.log("ABORTING!");
+    continuePrompt()
+  }
+
+  if (answers.rolePrompt === "View All") {
+    console.log("Generating Employee Table...");
+    viewDepartments();
+  };
+
+  if (answers.rolePrompt === "Add") {
+    addDepartment();
   };
 
 }
 
 async function addEmployee() {
   console.log("ADD AN EMPLOYEE")
-  const answers = await inquirer.prompt([
-    {
-      type: "input",
-      message: "What is the employee's first name?",
-      name: "first_name",
-    },
-    {
-      type: "input",
-      message: "What is the employee's last name?",
-      name: "last_name",
-    },
-    {
-      type: "list",
-      message: "What is the employee's role?",
-      name: "role_id",
-      choices: ["Presidente", "Boss Man", "Tinkerer", "Grunt", "Punching Bag"]
-    }
-
-  ])
-  if (answers.role_id === "Presidente") {
-    answers.role_id = 1
-  }
-  if (answers.role_id === "Boss Man") {
-    answers.role_id = 2
-  }
-  if (answers.role_id === "Tinkerer") {
-    answers.role_id = 3
-  }
-  if (answers.role_id === "Grunt") {
-    answers.role_id = 4
-  }
-  if (answers.role_id === "Punching Bag") {
-    answers.role_id = 5
-  }
-  console.log(answers);
-  writeEmployee(answers)
-
-
+  var role = roleList(async function (err1, res1) {
+    const answers = await inquirer.prompt([
+      {
+        type: "input",
+        message: "What is the employee's first name?",
+        name: "first_name",
+      },
+      {
+        type: "input",
+        message: "What is the employee's last name?",
+        name: "last_name",
+      },
+      {
+        type: "list",
+        message: "What is the employee's role?",
+        name: "role_id",
+        choices: res1.map(role => {
+          return {
+            name: role.title,
+            value: role.id
+          }
+        })
+      }
+    ])
+    console.log(answers);
+    writeEmployee(answers)
+  })
 }
+
+async function addRole() {
+  console.log("ADD A ROLE")
+  var role = departmentList(async function (err1, res1) {
+    const answers = await inquirer.prompt([
+      {
+        type: "input",
+        message: "What is the title of the role?",
+        name: "title",
+      },
+      {
+        type: "input",
+        message: "What is the annual salary?",
+        name: "salary",
+        validate: validateNum
+      },
+      {
+        type: "list",
+        message: "Which department?",
+        name: "department_id",
+        choices: res1.map(department => {
+          return {
+            name: department.name,
+            value: department.id
+          }
+        })
+      }
+    ])
+    console.log(answers);
+  writeRole(answers)
+  })
+  
+}
+
+async function addDepartment() {
+  console.log("ADD A DEPARTMENT")
+    const answers = await inquirer.prompt([
+      {
+        type: "input",
+        message: "What is the department name?",
+        name: "name",
+      }
+    ])
+    console.log(answers);
+    writeDepartment(answers)
+    mainPrompt()
+  }
 
 
 async function writeEmployee(answers) {
@@ -191,18 +261,39 @@ async function writeEmployee(answers) {
       console.log("somethings up...")
       console.log(err);
     }
-    console.table(data);
     console.log(answers.first_name + " added!");
   });
+  mainPrompt()
+}
+
+async function writeRole(answers) {
+  connection.query("INSERT INTO role SET ?", answers, function (err, data) {
+    if (err) {
+      console.log("somethings up...")
+      console.log(err);
+    }
+    console.log(answers.title + " added!");
+  });
+  mainPrompt()
+}
+
+async function writeDepartment(answers) {
+  connection.query("INSERT INTO department SET ?", answers, function (err, data) {
+    if (err) {
+      console.log("somethings up...")
+      console.log(err);
+    }
+    console.log(answers.name + " added!");
+  });
+  mainPrompt()
 }
 
 async function deleteEmployee() {
-  console.log("Delete...")
-  connection.query("SELECT * FROM employee", function (err1, res1) {
+  var emps = employeeList(async function (err1, res1) {
     const answers = await inquirer.prompt([
       {
         type: "list",
-        message: "Who are you ELIMINATING?",
+        message: "Whose role are you changing?",
         name: "all_employees",
         choices: res1.map(employee => {
           return {
@@ -218,11 +309,13 @@ async function deleteEmployee() {
         console.log(err2);
       }
       console.table(data2);
-      console.log(answers.first_name + " added!");
+      console.log("deleted!");
     });
 
   })
+  mainPrompt()
 }
+
 
 async function viewEmployees() {
   connection.query("SELECT * FROM employee;", function (err, data) {
@@ -232,6 +325,7 @@ async function viewEmployees() {
 
     console.table(data);
   })
+  mainPrompt()
 }
 
 async function viewRoles() {
@@ -256,16 +350,3 @@ async function viewDepartments() {
 
 mainPrompt()
 
-
-// Initiates the connection to the DB
-// =============================================================
-connection.connect(function (err) {
-  if (err) throw err;
-  console.log("connected as id " + connection.threadId);
-
-  // Starts the server to begin listening
-  // =============================================================
-  app.listen(PORT, function () {
-    console.log("App listening on PORT " + PORT);
-  });
-});
