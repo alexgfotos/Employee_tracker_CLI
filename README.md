@@ -1,3 +1,10 @@
+
+Woo this is this repetitive code! I mostly got everything work, I ran out of time (and energy) to do a few things like display the manager_ID when updated or have tables displays a little nicer without unnecessary information.  I find MYSQL to be easy to understand but difficult to execute! This was a challenge but satisfying when it works.
+
+
+
+
+
 # Unit 12 MySQL Homework: Employee Tracker
 
 Developers are often tasked with creating interfaces that make it easy for non-developers to view and interact with information stored in databases. Often these interfaces are known as **C**ontent **M**anagement **S**ystems. In this homework assignment, your challenge is to architect and build a solution for managing a company's employees using node, inquirer, and MySQL.

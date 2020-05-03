@@ -492,9 +492,9 @@ async function editEmployeeRole() {
           console.log(err3);
         }
         console.log("updated!");
+        mainPrompt()
       });
     }) 
-    mainPrompt()
   })
 }
 
