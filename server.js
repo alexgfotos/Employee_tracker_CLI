@@ -452,8 +452,9 @@ async function assignManager() {
         console.log(err2);
       }
       console.log("updated!");
+      mainPrompt()
     });
-    mainPrompt()
+    
   })
 }
 
