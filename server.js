@@ -37,7 +37,7 @@ function departmentList(cb) {
 }
 
 async function mainPrompt() {
-  const mainPromptChoices = ["Employee", "Role", "Department", "Assign Manager", "ABORT"]
+  const mainPromptChoices = ["Employee", "Role", "Department", "Assign Manager", "Total Utilized Budget", "ABORT"]
   const answers = await inquirer.prompt([
     {
       type: "list",
@@ -54,22 +54,22 @@ async function mainPrompt() {
 
   if (answers.main.toLowerCase() === "employee") {
     employeePrompt();
-
   }
 
   if (answers.main.toLowerCase() === "role") {
     rolePrompt();
-
   }
 
   if (answers.main.toLowerCase() === "department") {
     departmentPrompt();
-
   }
 
   if (answers.main.toLowerCase() === "assign manager") {
     assignManager();
+  }
 
+  if (answers.main.toLowerCase() === "total utilized budget") {
+    deptartmentBudget();
   }
 
 }
@@ -100,7 +100,7 @@ async function employeePrompt() {
       type: "list",
       message: "What would like to do with Employees?",
       name: "employeePrompt",
-      choices: ["View All", "Add", "Edit", "Delete", "ABORT"]
+      choices: ["View All", "Add", "Edit Role", "Delete", "ABORT"]
     }
 
   ])
@@ -117,6 +117,10 @@ async function employeePrompt() {
 
   if (answers.employeePrompt === "Add") {
     addEmployee();
+  };
+
+  if (answers.employeePrompt === "Edit Role") {
+    editEmployeeRole();
   };
 
   if (answers.employeePrompt === "Delete") {
@@ -245,7 +249,6 @@ async function addRole() {
         })
       }
     ])
-    console.log(answers);
     writeRole(answers)
   })
 
@@ -262,7 +265,6 @@ async function addDepartment() {
   ])
   console.log(answers);
   writeDepartment(answers)
-  mainPrompt()
 }
 
 
@@ -273,19 +275,18 @@ async function writeEmployee(answers) {
       console.log(err);
     }
     console.log(answers.first_name + " added!");
+    mainPrompt()
   });
-  mainPrompt()
 }
 
 async function writeRole(answers) {
   connection.query("INSERT INTO role SET ?", answers, function (err, data) {
     if (err) {
-      console.log("somethings up...")
-      console.log(err);
+      // console.log(err);
     }
     console.log(answers.title + " added!");
+    mainPrompt()
   });
-  mainPrompt()
 }
 
 async function writeDepartment(answers) {
@@ -295,8 +296,8 @@ async function writeDepartment(answers) {
       console.log(err);
     }
     console.log(answers.name + " added!");
+    mainPrompt()
   });
-  mainPrompt()
 }
 
 async function deleteEmployee() {
@@ -321,8 +322,8 @@ async function deleteEmployee() {
       }
       console.table(data2);
       console.log("deleted!");
+      mainPrompt()
     });
-    mainPrompt()
   })
 }
 
@@ -348,8 +349,8 @@ async function deleteRole() {
       }
       console.table(data2);
       console.log("deleted!");
+      mainPrompt()
     });
-    mainPrompt()
   })
 }
 
@@ -373,9 +374,9 @@ async function deleteDepartment() {
         console.log("somethings up...")
         console.log(err2);
       }
-      console.log(answers.delete_department + " deleted!");
+      console.log("deleted!");
+      mainPrompt()
     });
-    mainPrompt()
   })
 }
 
@@ -384,10 +385,9 @@ async function viewEmployees() {
     if (err) {
       console.log("HELP EMPLOYOTRON");
     }
-
     console.table(data);
+    mainPrompt()
   })
-  mainPrompt()
 }
 
 async function viewRoles() {
@@ -395,11 +395,9 @@ async function viewRoles() {
     if (err) {
       console.log("HELP EMPLOYOTRON");
     }
-
     console.table(data);
-
+    mainPrompt()
   })
-  mainPrompt()
 }
 
 async function viewDepartments() {
@@ -407,10 +405,9 @@ async function viewDepartments() {
     if (err) {
       console.log("HELP EMPLOYOTRON");
     }
-
     console.table(data);
+    mainPrompt()
   })
-  mainPrompt();
 }
 
 async function viewAll() {
@@ -418,10 +415,9 @@ async function viewAll() {
     if (err) {
       console.log("HELP EMPLOYOTRON");
     }
-
     console.table(data);
+    mainPrompt()
   })
-  mainPrompt();
 }
 
 async function assignManager() {
@@ -458,6 +454,58 @@ async function assignManager() {
       console.table(data2);
       console.log("updated!");
     });
+    mainPrompt()
+  })
+}
+
+async function editEmployeeRole() {
+  var emps = employeeList(async function (err1, res1) {
+    const answers = await inquirer.prompt([
+      {
+        type: "list",
+        message: "Who's role would you like to change?",
+        name: "current_role",
+        choices: res1.map(employee => {
+          return {
+            name: employee.first_name,
+            value: employee.id
+          }
+        })
+      }
+    ])
+    var roles = roleList(async function (err2, res2) {
+      const answers2 = await inquirer.prompt([
+        {
+          type: "list",
+          message: "What is their new role?",
+          name: "new_role",
+          choices: res2.map(role => {
+            return {
+              name: role.title,
+              value: role.id
+            }
+          })
+        }
+      ])
+      await connection.query("UPDATE employee SET role_id = ? WHERE id = ?", [answers2.new_role, answers.current_role], function (err3, data3) {
+        if (err3) {
+          console.log("somethings up...")
+          console.log(err3);
+        }
+        console.table(data3);
+        console.log("updated!");
+      });
+    })
+    mainPrompt()
+  })
+}
+
+async function deptartmentBudget() {
+  connection.query("SELECT SUM(salary) FROM role", function(err, data){
+    if(err) {
+      console.log(err)
+    }
+    console.table(data)
     mainPrompt()
   })
 }
