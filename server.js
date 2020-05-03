@@ -411,7 +411,7 @@ async function viewDepartments() {
 }
 
 async function viewAll() {
-  connection.query("SELECT first_name, last_name, role.title FROM employee INNER JOIN role ON role_id = role.id", function (err, data) {
+  connection.query("SELECT first_name, last_name, role.title, department.name FROM employee INNER JOIN role ON role_id = role.id INNER JOIN department ON role.department_id=department.id", function (err, data) {
     if (err) {
       console.log("HELP EMPLOYOTRON");
     }
