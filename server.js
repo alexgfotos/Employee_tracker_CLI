@@ -37,35 +37,38 @@ function departmentList(cb) {
 }
 
 async function mainPrompt() {
+  const mainPromptChoices = ["Employee", "Role", "Department", "Assign Manager", "ABORT"]
   const answers = await inquirer.prompt([
     {
       type: "list",
       message: "WELCOME TO EMPLOYOTRON 8000, WHAT DO YOU WISH TO EXECUTE?",
       name: "main",
-      choices: ["Employees", "Roles", "Departments", "ABORT"]
+      choices: mainPromptChoices
     }
 
   ])
 
-  // var runPrompt = answers.choices[]
-
   if (answers.main === "ABORT") {
     console.log("ABORTED SUCCESSFULLY")
   }
-  console.log(answers)
 
-  if (answers.main === "Employees") {
+  if (answers.main.toLowerCase() === "employee") {
     employeePrompt();
 
   }
 
-  if (answers.main === "Roles") {
+  if (answers.main.toLowerCase() === "role") {
     rolePrompt();
 
   }
 
-  if (answers.main === "Departments") {
+  if (answers.main.toLowerCase() === "department") {
     departmentPrompt();
+
+  }
+
+  if (answers.main.toLowerCase() === "assign manager") {
+    assignManager();
 
   }
 
@@ -109,7 +112,7 @@ async function employeePrompt() {
 
   if (answers.employeePrompt === "View All") {
     console.log("Generating Employee Table...");
-    viewEmployees();
+    viewAll();
   };
 
   if (answers.employeePrompt === "Add") {
@@ -147,6 +150,10 @@ async function rolePrompt() {
     addRole();
   };
 
+  if (answers.rolePrompt === "Delete") {
+    deleteRole();
+  };
+
 }
 
 async function departmentPrompt() {
@@ -172,6 +179,10 @@ async function departmentPrompt() {
 
   if (answers.rolePrompt === "Add") {
     addDepartment();
+  };
+
+  if (answers.rolePrompt === "Delete") {
+    deleteDepartment();
   };
 
 }
@@ -235,24 +246,24 @@ async function addRole() {
       }
     ])
     console.log(answers);
-  writeRole(answers)
+    writeRole(answers)
   })
-  
+
 }
 
 async function addDepartment() {
   console.log("ADD A DEPARTMENT")
-    const answers = await inquirer.prompt([
-      {
-        type: "input",
-        message: "What is the department name?",
-        name: "name",
-      }
-    ])
-    console.log(answers);
-    writeDepartment(answers)
-    mainPrompt()
-  }
+  const answers = await inquirer.prompt([
+    {
+      type: "input",
+      message: "What is the department name?",
+      name: "name",
+    }
+  ])
+  console.log(answers);
+  writeDepartment(answers)
+  mainPrompt()
+}
 
 
 async function writeEmployee(answers) {
@@ -293,8 +304,8 @@ async function deleteEmployee() {
     const answers = await inquirer.prompt([
       {
         type: "list",
-        message: "Whose role are you changing?",
-        name: "all_employees",
+        message: "Whose are you deleting?",
+        name: "delete_employee",
         choices: res1.map(employee => {
           return {
             name: employee.first_name,
@@ -303,7 +314,7 @@ async function deleteEmployee() {
         })
       }
     ])
-    await connection.query("DELETE FROM employee WHERE id = ?", answers.all_employees, function (err2, data2) {
+    await connection.query("DELETE FROM employee WHERE id = ?", answers.delete_employee, function (err2, data2) {
       if (err2) {
         console.log("somethings up...")
         console.log(err2);
@@ -311,11 +322,62 @@ async function deleteEmployee() {
       console.table(data2);
       console.log("deleted!");
     });
-
+    mainPrompt()
   })
-  mainPrompt()
 }
 
+async function deleteRole() {
+  var roles = roleList(async function (err1, res1) {
+    const answers = await inquirer.prompt([
+      {
+        type: "list",
+        message: "Which role are you deleting?",
+        name: "delete_role",
+        choices: res1.map(role => {
+          return {
+            name: role.title,
+            value: role.id
+          }
+        })
+      }
+    ])
+    await connection.query("DELETE FROM role WHERE id = ?", answers.delete_role, function (err2, data2) {
+      if (err2) {
+        console.log("somethings up...")
+        console.log(err2);
+      }
+      console.table(data2);
+      console.log("deleted!");
+    });
+    mainPrompt()
+  })
+}
+
+async function deleteDepartment() {
+  var roles = departmentList(async function (err1, res1) {
+    const answers = await inquirer.prompt([
+      {
+        type: "list",
+        message: "Which department are you deleting?",
+        name: "delete_department",
+        choices: res1.map(department => {
+          return {
+            name: department.name,
+            value: department.id
+          }
+        })
+      }
+    ])
+    await connection.query("DELETE FROM department WHERE id = ?", answers.delete_department, function (err2, data2) {
+      if (err2) {
+        console.log("somethings up...")
+        console.log(err2);
+      }
+      console.log(answers.delete_department + " deleted!");
+    });
+    mainPrompt()
+  })
+}
 
 async function viewEmployees() {
   connection.query("SELECT * FROM employee;", function (err, data) {
@@ -335,7 +397,9 @@ async function viewRoles() {
     }
 
     console.table(data);
+
   })
+  mainPrompt()
 }
 
 async function viewDepartments() {
@@ -346,7 +410,58 @@ async function viewDepartments() {
 
     console.table(data);
   })
+  mainPrompt();
 }
+
+async function viewAll() {
+  connection.query("SELECT first_name, last_name, role.title FROM employee INNER JOIN role ON role_id = role.id", function (err, data) {
+    if (err) {
+      console.log("HELP EMPLOYOTRON");
+    }
+
+    console.table(data);
+  })
+  mainPrompt();
+}
+
+async function assignManager() {
+  var emps = employeeList(async function (err1, res1) {
+    const answers = await inquirer.prompt([
+      {
+        type: "list",
+        message: "Who are you assigning a manager to?",
+        name: "managed",
+        choices: res1.map(employee => {
+          return {
+            name: employee.first_name,
+            value: employee.id
+          }
+        })
+      },
+      {
+        type: "list",
+        message: "Who is their manager?",
+        name: "manager",
+        choices: res1.map(employee => {
+          return {
+            name: employee.first_name,
+            value: employee.id
+          }
+        })
+      }
+    ])
+    await connection.query("UPDATE employee SET manager_id = ? WHERE id = ?", [answers.manager, answers.managed], function (err2, data2) {
+      if (err2) {
+        console.log("somethings up...")
+        console.log(err2);
+      }
+      console.table(data2);
+      console.log("updated!");
+    });
+    mainPrompt()
+  })
+}
+
 
 mainPrompt()
 
