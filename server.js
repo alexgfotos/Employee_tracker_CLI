@@ -1,21 +1,14 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer")
 
-
-// "UPDATE quotes SET ? WHERE ?", [{author: kjldhfg, quote: elkfhjer}, {id: something.id}]
-
-// Create a connection to the DB
 const connection = mysql.createConnection({
   host: "localhost",
 
-  // Your port; if not 3306
   port: 3306,
 
-  // Your username
   user: "root",
 
-  // Your password
-  password: "burger12?",
+  password: "",
   database: "employees"
 });
 
@@ -73,7 +66,6 @@ async function mainPrompt() {
   }
 
 }
-
 
 async function continuePrompt() {
   const answers = await inquirer.prompt([
@@ -271,7 +263,6 @@ async function addDepartment() {
 async function writeEmployee(answers) {
   connection.query("INSERT INTO employee SET ?", answers, function (err, data) {
     if (err) {
-      console.log("somethings up...")
       console.log(err);
     }
     console.log(answers.first_name + " added!");
@@ -282,7 +273,7 @@ async function writeEmployee(answers) {
 async function writeRole(answers) {
   connection.query("INSERT INTO role SET ?", answers, function (err, data) {
     if (err) {
-      // console.log(err);
+      console.log(err);
     }
     console.log(answers.title + " added!");
     mainPrompt()
@@ -292,7 +283,6 @@ async function writeRole(answers) {
 async function writeDepartment(answers) {
   connection.query("INSERT INTO department SET ?", answers, function (err, data) {
     if (err) {
-      console.log("somethings up...")
       console.log(err);
     }
     console.log(answers.name + " added!");
@@ -317,7 +307,6 @@ async function deleteEmployee() {
     ])
     await connection.query("DELETE FROM employee WHERE id = ?", answers.delete_employee, function (err2, data2) {
       if (err2) {
-        console.log("somethings up...")
         console.log(err2);
       }
       console.table(data2);
@@ -344,7 +333,6 @@ async function deleteRole() {
     ])
     await connection.query("DELETE FROM role WHERE id = ?", answers.delete_role, function (err2, data2) {
       if (err2) {
-        console.log("somethings up...")
         console.log(err2);
       }
       console.table(data2);
@@ -371,7 +359,6 @@ async function deleteDepartment() {
     ])
     await connection.query("DELETE FROM department WHERE id = ?", answers.delete_department, function (err2, data2) {
       if (err2) {
-        console.log("somethings up...")
         console.log(err2);
       }
       console.log("deleted!");
@@ -448,13 +435,12 @@ async function assignManager() {
     ])
     await connection.query("UPDATE employee SET manager_id = ? WHERE id = ?", [answers.manager, answers.managed], function (err2, data2) {
       if (err2) {
-        console.log("somethings up...")
         console.log(err2);
       }
       console.log("updated!");
       mainPrompt()
     });
-    
+
   })
 }
 
@@ -489,26 +475,24 @@ async function editEmployeeRole() {
       ])
       await connection.query("UPDATE employee SET role_id = ? WHERE id = ?", [answers2.new_role, answers.current_role], function (err3, data3) {
         if (err3) {
-          console.log("somethings up...")
           console.log(err3);
         }
         console.log("updated!");
         mainPrompt()
       });
-    }) 
+    })
   })
 }
 
 async function deptartmentBudget() {
-  connection.query("SELECT SUM(salary) FROM role", function(err, data){
-    if(err) {
+  connection.query("SELECT SUM(salary) FROM role", function (err, data) {
+    if (err) {
       console.log(err)
     }
     console.table(data)
     mainPrompt()
   })
 }
-
 
 mainPrompt()
 
