@@ -1,5 +1,5 @@
 
-Woo this is this repetitive code! I mostly got everything work, I ran out of time (and energy) to do a few things like display the manager_ID when updated or have tables displays a little nicer without unnecessary information.  I find MYSQL to be easy to understand but difficult to execute! This was a challenge but satisfying when it works.
+Woo this is some repetitive code! I mostly got everything working, I ran out of time (and energy) to do a few things like display the manager_ID when updated or have tables displays a little nicer without unnecessary information.  I find MYSQL to be easy to understand but difficult to execute! This was a challenge but satisfying when it works.
 
 
 
